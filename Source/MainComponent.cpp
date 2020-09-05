@@ -44,7 +44,7 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     parameters.set ("bellL", 0.1);                  // bell (length ratio)
     
     //// Lip ////
-    double f0 = 150;
+    double f0 = 150.0;
     double H0 = 2.9e-4;
     parameters.set("f0", f0);                       // fundamental freq lips
     parameters.set("Mr", 5.37e-5);                  // mass lips
@@ -85,12 +85,11 @@ void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFil
     for (int i = 0; i < bufferToFill.numSamples; ++i)
     {
         trombone->calculate();
-        output = trombone->getOutput();
-        std::cout << output << std::endl;
+        output = trombone->getOutput() * 0.00001;
 
         trombone->updateStates();
-//        channelData1[i] = Global::outputClamp (output);
-//        channelData2[i] = Global::outputClamp (output);
+        channelData1[i] = Global::outputClamp (output);
+        channelData2[i] = Global::outputClamp (output);
 
     }
 }

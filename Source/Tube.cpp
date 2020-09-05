@@ -24,13 +24,13 @@ Tube::Tube (NamedValueSet& parameters, double k) : k (k), L (*parameters.getVarP
     lambdaOverRhoC = lambda / (rho * c);
     
     // initialise state vectors
-    vVecs.reserve (2);
-    pVecs.reserve (2);
+    vVecs.resize (2);
+    pVecs.resize (2);
 
     for (int i = 0; i < 2; ++i)
     {
-        vVecs.push_back (std::vector<double> (N, 0));
-        pVecs.push_back (std::vector<double> (N, 0));
+        vVecs[i] = std::vector<double> (N, 0);
+        pVecs[i] = std::vector<double> (N, 0);
     }
     v.resize (2);
     p.resize (2);
@@ -90,7 +90,7 @@ void Tube::calculateThermodynamicConstants()
 void Tube::calculateVelocity()
 {
     for (int l = 0; l < N - 1; ++l)
-        v[0][l] = v[1][l] - lambdaOverRhoC * (p[l+1] - p[l]);
+        v[0][l] = v[1][l] - lambdaOverRhoC * (p[1][l+1] - p[1][l]);
 }
 
 void Tube::calculatePressure()

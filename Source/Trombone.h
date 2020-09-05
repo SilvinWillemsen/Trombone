@@ -28,7 +28,7 @@ public:
     void resized() override;
 
     void calculate();
-    float getOutput() { return lipModel->getY(); };
+    float getOutput() { return tube->getOutput(); };
     void updateStates();
 private:
     std::unique_ptr<Tube> tube;

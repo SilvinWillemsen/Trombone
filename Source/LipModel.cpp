@@ -37,6 +37,9 @@ LipModel::LipModel (NamedValueSet& parameters, double k) : k (k),
     a2 = Sr * oOM;
     
     psiPrev = 0;
+    
+    y = 0;
+    yPrev = H0;
 }
 
 LipModel::~LipModel()
