@@ -34,10 +34,9 @@ public:
     float getLipOutput() { return lipModel->getY(); };
     
     void updateStates();
-    
-    void setPressure (double val) { lipModel->setPressure (val); };
-    void setLipFreqHz (double val) { lipModel->setLipFreqHz (val); };
 
+    void refreshLipModelInputParams() { lipModel->refreshInputParams(); };
+    
 private:
     std::unique_ptr<Tube> tube;
     std::unique_ptr<LipModel> lipModel;

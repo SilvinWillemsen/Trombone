@@ -22,11 +22,13 @@ public:
     Tube (NamedValueSet& parameters, double k);
     ~Tube() override;
 
+    Path drawGeometry (Graphics& g, int topOrBottom);
     void paint (juce::Graphics&) override;
     void resized() override;
 
     void calculateThermodynamicConstants();
     void calculateGeometry (NamedValueSet& parameters);
+    void calculateRadii();
     void calculateVelocity();
     void calculatePressure();
 
@@ -69,7 +71,7 @@ private:
     std::vector<std::vector<double>> uVecs;
     
     // tube geometry
-    std::vector<double> S, SHalf, SBar;
+    std::vector<double> S, SHalf, SBar, oOSBar, radii;
     
     double* vTmp = nullptr;
     double* pTmp = nullptr;

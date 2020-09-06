@@ -29,7 +29,6 @@ public:
     void setTubeStates (double p, double vNext) { p0 = p; vNext0 = vNext; };
     void calculateCollision();
     void calculateDeltaP();
-    void calculateFlowVelocities();
     
     double getUb() { return Ub; };
     double getUr() { return Ur; };
@@ -48,9 +47,12 @@ public:
     double getDampEnergy();
     double getPower();
     
-    void setPressure (double val) { Pm = val; };
-    void setLipFreqHz (double val);
+    void refreshInputParams();
 
+    void mouseDown (const MouseEvent& e) override;
+    void mouseDrag (const MouseEvent& e) override;
+    void mouseUp (const MouseEvent& e) override;
+    
 private:
     double k, omega0, M, sig, Sr, w, Kcol, alpha, H0, b, eta, g, psi, psiPrev, Pm, Ub, Ur;
     double oOk, omega0Sq, kO2M, oOM, oOa1, oO2k;
@@ -71,5 +73,9 @@ private:
     double colEnergy1 = -1;
     
     double pHPrev, qHPrev = 0;
+    
+    double pressureVal = 0;
+    double lipFreqVal = 100;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LipModel)
 };

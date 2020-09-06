@@ -55,15 +55,8 @@ void LipModel::paint (juce::Graphics& g)
        drawing code..
     */
 
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+    g.fillAll (Colours::yellow);   // clear the background
 
-    g.setColour (juce::Colours::grey);
-    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-    g.setColour (juce::Colours::white);
-    g.setFont (14.0f);
-    g.drawText ("LipModel", getLocalBounds(),
-                juce::Justification::centred, true);   // draw some placeholder text
 }
 
 void LipModel::resized()
@@ -124,11 +117,6 @@ void LipModel::calculate()
 
 }
 
-void LipModel::calculateFlowVelocities()
-{
-    
-}
-
 void LipModel::updateStates()
 {
     yPrev = y;
@@ -176,10 +164,30 @@ double LipModel::getPower()
     
 }
 
-void LipModel::setLipFreqHz (double val)
+void LipModel::refreshInputParams()
 {
-    omega0 = val * 2.0 * double_Pi;
+    Pm = pressureVal;
+    omega0 = lipFreqVal * 2.0 * double_Pi;
     omega0Sq = omega0 * omega0;
-    
     a1Coeff = 2.0 * oOk + omega0Sq * k + sig;
 }
+
+
+void LipModel::mouseDown (const MouseEvent& e)
+{
+    pressureVal = e.y * 100.0;
+    lipFreqVal = e.x;
+    
+}
+
+void LipModel::mouseDrag (const MouseEvent& e)
+{
+    pressureVal = e.y * 100.0;
+    lipFreqVal = e.x;
+}
+
+void LipModel::mouseUp (const MouseEvent& e)
+{
+    pressureVal = 0;
+}
+

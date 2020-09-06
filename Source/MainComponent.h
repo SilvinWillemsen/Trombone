@@ -33,9 +33,7 @@ public:
     void paint (Graphics& g) override;
     void resized() override;
 
-    void mouseDown (const MouseEvent& e) override;
-    void mouseDrag (const MouseEvent& e) override;
-    void mouseUp (const MouseEvent& e) override;
+    
 
 private:
 
@@ -43,8 +41,6 @@ private:
     std::unique_ptr<Trombone> trombone;
 
     double fs;
-    double pressureVal = 0;
-    double lipFreqVal = 100;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

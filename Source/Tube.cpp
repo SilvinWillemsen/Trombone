@@ -57,7 +57,7 @@ Tube::Tube (NamedValueSet& parameters, double k) : k (k), L (*parameters.getVarP
     }
     
     calculateGeometry (parameters);
-    
+    calculateRadii();
 }
 
 Tube::~Tube()
@@ -73,15 +73,31 @@ void Tube::paint (juce::Graphics& g)
        drawing code..
     */
 
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+    g.setColour (Colours::gold);
+    Path stringPathTop = drawGeometry (g, -1);
+    Path stringPathBottom = drawGeometry (g, 1);
+    g.strokePath (stringPathTop, PathStrokeType(2.0f));
+    g.strokePath (stringPathBottom, PathStrokeType(2.0f));
+//    std::cout << "repainted" << std::endl;
 
-    g.setColour (juce::Colours::grey);
-    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
+}
 
-    g.setColour (juce::Colours::white);
-    g.setFont (14.0f);
-    g.drawText ("Tube", getLocalBounds(),
-                juce::Justification::centred, true);   // draw some placeholder text
+Path Tube::drawGeometry (Graphics& g, int topOrBottom)
+{
+    double visualScaling = 1000.0;
+    Path stringPath;
+    stringPath.startNewSubPath (0, topOrBottom * radii[0] * visualScaling + getHeight() * 0.5);
+    int stateWidth = getWidth();
+    auto spacing = stateWidth / static_cast<double>(N);
+    auto x = spacing;
+    
+    for (int y = 1; y < N; y++)
+    {
+        stringPath.lineTo(x, topOrBottom * radii[y] * visualScaling + getHeight() * 0.5);
+
+        x += spacing;
+    }
+    return stringPath;
 }
 
 void Tube::resized()
@@ -111,9 +127,9 @@ void Tube::calculateVelocity()
 void Tube::calculatePressure()
 {
     for (int l = 1; l < N - 1; ++l)
-        p[0][l] = p[1][l] - rho * c * lambda / SBar[l] * (SHalf[l] * v[0][l] - SHalf[l-1] * v[0][l-1]);
+        p[0][l] = p[1][l] - rho * c * lambda * oOSBar[l] * (SHalf[l] * v[0][l] - SHalf[l-1] * v[0][l-1]);
     
-    p[0][0] = p[1][0] - rho * c * lambda / SBar[0] * (-2.0 * (Ub + Ur) + 2.0 * SHalf[0] * v[0][0]);
+    p[0][0] = p[1][0] - rho * c * lambda * oOSBar[0] * (-2.0 * (Ub + Ur) + 2.0 * SHalf[0] * v[0][0]);
     
 }
 
@@ -133,6 +149,7 @@ void Tube::calculateGeometry (NamedValueSet& parameters)
     S.resize (N, 0);
     SHalf.resize (N-1, 0);
     SBar.resize (N, 0);
+    oOSBar.resize (N, 0);
     
     double mp = *parameters.getVarPointer ("mp");
     double tubeS = *parameters.getVarPointer ("tubeS");
@@ -142,7 +159,9 @@ void Tube::calculateGeometry (NamedValueSet& parameters)
     int bellL = N * double (*parameters.getVarPointer ("bellL"));
     
     double flare = *parameters.getVarPointer ("flare");
-    
+    double x0 = *parameters.getVarPointer ("x0");
+    double b = *parameters.getVarPointer ("b");
+
     for (int i = 0; i < N; ++i)
     {
         if (i < mpL)
@@ -152,7 +171,7 @@ void Tube::calculateGeometry (NamedValueSet& parameters)
         else if (i >= mpL + m2tL && i < N - bellL)
             S[i] = tubeS;
         else
-            S[i] = tubeS * exp (flare * (i - (N - bellL)));
+            S[N-1-(i - (N - bellL))] = pow(b * pow(((i - (N - bellL)) / (2.0 * bellL) + x0), -flare), 2) * double_Pi;
     }
     
     for (int i = 0; i < N - 1; ++i)
@@ -164,23 +183,17 @@ void Tube::calculateGeometry (NamedValueSet& parameters)
         SBar[i+1] = (SHalf[i] + SHalf[i+1]) * 0.5;
     
     SBar[N-1] = S[N-1];
-//
-//    mp = linspace(0.001, 0.001, floor(N/40));           % mouthpiece
-//    m2t = linspace(mp(end), 0.0005, floor(N/40));       % mouthpiece to tube
-//
-//    alpha = 0.25;                                       % bell
-//    b = m2t(end) * exp(alpha * (0:18));
-//    pointsLeft = N - length([mp, m2t, b]);
-//    tube = linspace(m2t(end), m2t(end), pointsLeft);    % tube
-//
-//    S = [mp, m2t, tube, b]';                            % True geometry
-//    %     S = 0.005 * (ones(length(S), 1));
-//    % Calculate approximations to the geometry
-//    SHalf = (S(1:N-1) + S(2:N)) * 0.5;                  % mu_{x+}
-//    SBar = (SHalf(1:end-1) + SHalf(2:end)) * 0.5;
-//    SBar = [S(1); SBar; S(end)];                        % mu_{x-}S_{l+1/2}
+    for (int i = 0; i < N; ++i)
+        oOSBar[i] = 1.0 / SBar[i];
 }
 
+void Tube::calculateRadii()
+{
+    radii.resize (N, 0);
+    for (int i = 0; i < N; ++i)
+        radii[i] = sqrt (S[i]) / double_Pi;
+    
+}
 double Tube::getKinEnergy()
 {
     double kinEnergy = 0;

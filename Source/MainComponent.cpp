@@ -13,10 +13,9 @@ MainComponent::MainComponent()
 {
     // Make sure you set the size of the component after
     // you add any child components.
-    setSize (800, 600);
-
+    
     // specify the number of input and output channels that we want to open
-    setAudioChannels (2, 2);
+    setAudioChannels (0, 2);
 }
 
 MainComponent::~MainComponent()
@@ -33,15 +32,20 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     
     //// Tube ////
     parameters.set ("T", 26.85);
-    parameters.set ("L", 1);
+    parameters.set ("L", 2.658);
 
     // Geometry
-    parameters.set ("mp", 0.001);                   // mouthpiece cross section
-    parameters.set ("mpL", 0.1);                    // mouthpiece length (length ratio)
-    parameters.set ("m2tL", 0.05);                  // mouthpiece to tube (length ratio)
-    parameters.set ("tubeS", 0.0005);               // tube cross section
-    parameters.set ("flare", 0.25);                 // flare (exponent coeff)
-    parameters.set ("bellL", 0.1);                  // bell (length ratio)
+    parameters.set ("mp", 0.015 * 0.015 * double_Pi);                   // mouthpiece cross-sectional area
+    parameters.set ("mpL", 0.01);                   // mouthpiece length (length ratio)
+    parameters.set ("m2tL", 0.01);                  // mouthpiece to tube (length ratio)
+    parameters.set ("tubeS", 0.01 * 0.01 * double_Pi);                 // tube cross-sectional area
+    
+    // formula from bell taken from T. Smyth "Trombone synthesis by model and measurement"
+    
+    parameters.set ("flare", 0.7);                 // flare (exponent coeff)
+    parameters.set ("x0", 0.0174);                    // position of bell mouth (exponent coeff)
+    parameters.set ("b", 0.0063);                   // fitting parameter
+    parameters.set ("bellL", 0.21);                  // bell (length ratio)
     
     //// Lip ////
     double f0 = 100.0;
@@ -64,6 +68,10 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     parameters.set ("Pm", 3000);
     
     trombone = std::make_unique<Trombone> (parameters, 1.0 / fs);
+    addAndMakeVisible (trombone.get());
+    
+    setSize (800, 600);
+
 }
 
 void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -92,9 +100,7 @@ void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFil
         channelData2[i] = Global::outputClamp (output);
 
     }
-    
-    trombone->setPressure (pressureVal);
-    trombone->setLipFreqHz (lipFreqVal);
+    trombone->refreshLipModelInputParams();
 }
 
 void MainComponent::releaseResources()
@@ -119,23 +125,5 @@ void MainComponent::resized()
     // This is called when the MainContentComponent is resized.
     // If you add any child components, this is where you should
     // update their positions.
+    trombone->setBounds (getLocalBounds());
 }
-
-void MainComponent::mouseDown (const MouseEvent& e)
-{
-    pressureVal = e.y * 10.0;
-    lipFreqVal = e.x;
-
-}
-
-void MainComponent::mouseDrag (const MouseEvent& e)
-{
-    pressureVal = e.y * 10.0;
-    lipFreqVal = e.x;
-}
-
-void MainComponent::mouseUp (const MouseEvent& e)
-{
-    pressureVal = 0;
-}
-
