@@ -44,7 +44,7 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     parameters.set ("bellL", 0.1);                  // bell (length ratio)
     
     //// Lip ////
-    double f0 = 150.0;
+    double f0 = 100.0;
     double H0 = 2.9e-4;
     parameters.set("f0", f0);                       // fundamental freq lips
     parameters.set("Mr", 5.37e-5);                  // mass lips
@@ -57,9 +57,8 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     parameters.set("w", 1e-2);                      // lip width
     parameters.set("Sr", 1.46e-5);                  // lip area
     
-    parameters.set ("Kcol", 0);
-    parameters.set ("alphaCol", 1);
-    
+    parameters.set ("Kcol", 10000);
+    parameters.set ("alphaCol", 10);
     
     //// Input ////
     parameters.set ("Pm", 3000);
@@ -86,12 +85,16 @@ void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFil
     {
         trombone->calculate();
         output = trombone->getOutput() * 0.00001;
-
+//        output = trombone->getLipOutput() * 10.0;
+//        std::cout << "Output: " << output << std::endl;
         trombone->updateStates();
         channelData1[i] = Global::outputClamp (output);
         channelData2[i] = Global::outputClamp (output);
 
     }
+    
+    trombone->setPressure (pressureVal);
+    trombone->setLipFreqHz (lipFreqVal);
 }
 
 void MainComponent::releaseResources()
@@ -117,3 +120,22 @@ void MainComponent::resized()
     // If you add any child components, this is where you should
     // update their positions.
 }
+
+void MainComponent::mouseDown (const MouseEvent& e)
+{
+    pressureVal = e.y * 10.0;
+    lipFreqVal = e.x;
+
+}
+
+void MainComponent::mouseDrag (const MouseEvent& e)
+{
+    pressureVal = e.y * 10.0;
+    lipFreqVal = e.x;
+}
+
+void MainComponent::mouseUp (const MouseEvent& e)
+{
+    pressureVal = 0;
+}
+

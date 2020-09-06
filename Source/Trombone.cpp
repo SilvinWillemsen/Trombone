@@ -68,6 +68,17 @@ void Trombone::calculate()
     lipModel->calculate();
     tube->setFlowVelocities (lipModel->getUb(), lipModel->getUr());
     tube->calculatePressure();
+    
+    calculateEnergy();
+}
+
+void Trombone::calculateEnergy()
+{
+    double totEnergy = tube->getKinEnergy() + tube->getPotEnergy() + lipModel->getLipEnergy() + lipModel->getCollisionEnergy();
+    double energy1 = tube->getKinEnergy1() + tube->getPotEnergy1() + lipModel->getLipEnergy1() + lipModel->getCollisionEnergy1();
+    
+    double scaledTotEnergy = (totEnergy + lipModel->getPower() + lipModel->getDampEnergy() - energy1) / energy1;
+//    std::cout << scaledTotEnergy << std::endl;
 }
 
 void Trombone::updateStates()

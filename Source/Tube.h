@@ -44,6 +44,12 @@ public:
     double getS (int idx) { return S[idx]; };
     double getSHalf (int idx) { return SHalf[idx]; };
     double getSBar (int idx) { return SBar[idx]; };
+    
+    double getKinEnergy();
+    double getPotEnergy();
+
+    double getKinEnergy1() { return kinEnergy1; };
+    double getPotEnergy1() { return potEnergy1; };
 
 private:
     double k, h, c, lambda, rho, L, T;
@@ -67,6 +73,10 @@ private:
     
     double* vTmp = nullptr;
     double* pTmp = nullptr;
-
+    
+    double kinEnergy1 = -1;
+    double potEnergy1 = -1;
+    
+    bool raisedCos = false;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Tube)
 };

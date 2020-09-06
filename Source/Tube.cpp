@@ -32,6 +32,21 @@ Tube::Tube (NamedValueSet& parameters, double k) : k (k), L (*parameters.getVarP
         vVecs[i] = std::vector<double> (N, 0);
         pVecs[i] = std::vector<double> (N, 0);
     }
+    
+    if (raisedCos)
+    {
+        int start = N * 0.5 - 5;
+        int end = N * 0.5 + 5;
+        double scaling = 100000.0;
+        for (int n = 0; n < 2; ++n)
+        {
+            for (int l = start; l < end; ++l)
+            {
+                pVecs[n][l] = scaling * (1.0 - cos (2.0 * double_Pi * (l-start) / static_cast<float>(end - start))) * 0.5;
+            }
+        }
+    }
+    
     v.resize (2);
     p.resize (2);
 
@@ -166,3 +181,27 @@ void Tube::calculateGeometry (NamedValueSet& parameters)
 //    SBar = [S(1); SBar; S(end)];                        % mu_{x-}S_{l+1/2}
 }
 
+double Tube::getKinEnergy()
+{
+    double kinEnergy = 0;
+    for (int i = 0; i < N; ++i)
+    {
+        kinEnergy += 1.0 / (2.0 * rho * c * c) * h * (SBar[i] * p[1][i] * p[1][i] * (i == 0 || i == N-1 ? 0.5 : 1));
+    }
+    if (kinEnergy1 < 0)
+        kinEnergy1 = kinEnergy;
+    return kinEnergy;
+
+}
+
+double Tube::getPotEnergy()
+{
+    double potEnergy = 0;
+    for (int i = 0; i < N-1; ++i)
+        potEnergy += rho * 0.5 * h * (SHalf[i] * v[0][i] * v[1][i]);
+    
+    if (potEnergy1 < 0)
+        potEnergy1 = potEnergy;
+    
+    return potEnergy;
+}

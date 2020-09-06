@@ -38,6 +38,19 @@ public:
     
     void calculate();
     void updateStates();
+    
+    double getLipEnergy();
+    double getLipEnergy1() { return lipEnergy1; };
+
+    double getCollisionEnergy();
+    double getCollisionEnergy1() { return colEnergy1; };
+
+    double getDampEnergy();
+    double getPower();
+    
+    void setPressure (double val) { Pm = val; };
+    void setLipFreqHz (double val);
+
 private:
     double k, omega0, M, sig, Sr, w, Kcol, alpha, H0, b, eta, g, psi, psiPrev, Pm, Ub, Ur;
     double oOk, omega0Sq, kO2M, oOM, oOa1, oO2k;
@@ -53,5 +66,10 @@ private:
     double y;
     double yPrev;
 //    double yTmp;
+    
+    double lipEnergy1 = -1;
+    double colEnergy1 = -1;
+    
+    double pHPrev, qHPrev = 0;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LipModel)
 };

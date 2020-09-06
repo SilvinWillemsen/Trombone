@@ -136,3 +136,50 @@ void LipModel::updateStates()
     
     psiPrev = psi;
 }
+
+double LipModel::getLipEnergy()
+{
+    double lipEnergy = M * 0.5 * ((oOk * (y - yPrev)) * (oOk * (y - yPrev)) + omega0Sq * (y * y + yPrev * yPrev) * 0.5);
+    
+    if (lipEnergy1 < 0)
+        lipEnergy1 = lipEnergy;
+    
+    return lipEnergy;
+}
+
+double LipModel::getCollisionEnergy()
+{
+    double colEnergy = psiPrev * psiPrev * 0.5;
+    
+    if (colEnergy1 < 0)
+        colEnergy1 = colEnergy;
+    
+    return colEnergy;
+}
+
+double LipModel::getDampEnergy()
+{
+    double dampEnergy = M * sig * (1.0 * oO2k * (yNext - yPrev)) * (1.0 * oO2k * (yNext - yPrev)) + Ub * deltaP;
+    double qH = k * dampEnergy + qHPrev;
+    double qHPrevTmp = qHPrev;
+    qHPrev = qH;
+    return qHPrevTmp;
+}
+
+double LipModel::getPower()
+{
+    double power = -(Ub + Ur) * Pm;
+    double pH = k * power + pHPrev;
+    double pHPrevTmp = pHPrev;
+    pHPrev = pH;
+    return pHPrevTmp;
+    
+}
+
+void LipModel::setLipFreqHz (double val)
+{
+    omega0 = val * 2.0 * double_Pi;
+    omega0Sq = omega0 * omega0;
+    
+    a1Coeff = 2.0 * oOk + omega0Sq * k + sig;
+}

@@ -28,8 +28,16 @@ public:
     void resized() override;
 
     void calculate();
+    void calculateEnergy();
+    
     float getOutput() { return tube->getOutput(); };
+    float getLipOutput() { return lipModel->getY(); };
+    
     void updateStates();
+    
+    void setPressure (double val) { lipModel->setPressure (val); };
+    void setLipFreqHz (double val) { lipModel->setLipFreqHz (val); };
+
 private:
     std::unique_ptr<Tube> tube;
     std::unique_ptr<LipModel> lipModel;
