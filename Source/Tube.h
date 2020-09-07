@@ -23,6 +23,7 @@ public:
     ~Tube() override;
 
     Path drawGeometry (Graphics& g, int topOrBottom);
+    Path visualiseState (Graphics& g, double visualScaling);
     void paint (juce::Graphics&) override;
     void resized() override;
 
@@ -31,9 +32,10 @@ public:
     void calculateRadii();
     void calculateVelocity();
     void calculatePressure();
+    void calculateRadiation();
 
     void setFlowVelocities (double UbIn, double UrIn) { Ub = UbIn; Ur = UrIn; };
-    float getOutput() { return getP (1, N-5); };
+    float getOutput() { return getP (1, N-1); };
     void updateStates();
     
     double getP (int n, int l) { return p[n][l]; };
@@ -49,13 +51,21 @@ public:
     
     double getKinEnergy();
     double getPotEnergy();
-
+    double getRadEnergy();
+    double getRadDampEnergy();
+    
     double getKinEnergy1() { return kinEnergy1; };
     double getPotEnergy1() { return potEnergy1; };
+    double getRadEnergy1() { return radEnergy1; };
 
 private:
     double k, h, c, lambda, rho, L, T;
     int N;
+    
+    // Radiation vars
+    double R1, rL, Lr, R2, Cr, z1, z2, z3, z4;
+    double p1Next, p1, v1Next, v1;
+    double oORadTerm;
     
     double Ub, Ur;
     
@@ -76,9 +86,12 @@ private:
     double* vTmp = nullptr;
     double* pTmp = nullptr;
     
-    double kinEnergy1 = -1;
-    double potEnergy1 = -1;
-    
+    double kinEnergy1, potEnergy1, radEnergy1 = -1;
+
     bool raisedCos = false;
+    bool init = true;
+    
+    double qHRadPrev = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Tube)
 };

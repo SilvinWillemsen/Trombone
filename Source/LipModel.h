@@ -74,8 +74,8 @@ private:
     
     double pHPrev, qHPrev = 0;
     
-    double pressureVal = 0;
-    double lipFreqVal = 100;
+    double pressureVal;
+    double lipFreqVal;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LipModel)
 };

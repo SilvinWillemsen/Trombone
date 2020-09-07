@@ -58,6 +58,31 @@ Tube::Tube (NamedValueSet& parameters, double k) : k (k), L (*parameters.getVarP
     
     calculateGeometry (parameters);
     calculateRadii();
+    
+    // Radiation
+    R1 = rho * c;
+    rL = sqrt(SBar[N-1]) / (2.0 * double_Pi);
+    Lr = 0.613 * rho * rL;
+    R2 = 0.505 * rho * c;
+    Cr = 1.111 * rL / (rho * c * c);
+    
+    double zDiv = 2.0 * R1 * R2 * Cr + k * (R1 + R2);
+    if (zDiv == 0)
+    {
+        z1 = 0;
+        z2 = 0;
+    } else {
+        z1 = 2 * R2 * k / zDiv;
+        z2 = (2 * R1 * R2 * Cr - k * (R1 + R2)) / zDiv;
+    }
+    
+    z3 = k / (2.0 *Lr) + z1 / (2.0 * R2) + Cr * z1 / k;
+    z4 = (z2 + 1.0) / (2.0 * R2) + (Cr * z2 - Cr) / k;
+    
+    oORadTerm = 1.0 / (1.0 + rho * c * lambda * z3);
+    
+    p1 = 0;
+    v1 = 0;
 }
 
 Tube::~Tube()
@@ -73,11 +98,20 @@ void Tube::paint (juce::Graphics& g)
        drawing code..
     */
 
-    g.setColour (Colours::gold);
-    Path stringPathTop = drawGeometry (g, -1);
-    Path stringPathBottom = drawGeometry (g, 1);
-    g.strokePath (stringPathTop, PathStrokeType(2.0f));
-    g.strokePath (stringPathBottom, PathStrokeType(2.0f));
+//    if (init)
+//    {
+        g.setColour (Colours::gold);
+        Path stringPathTop = drawGeometry (g, -1);
+        Path stringPathBottom = drawGeometry (g, 1);
+        g.strokePath (stringPathTop, PathStrokeType(2.0f));
+        g.strokePath (stringPathBottom, PathStrokeType(2.0f));
+        init = false;
+//    }
+    g.setColour (Colours::cyan);
+    Path state = visualiseState (g, 0.01 * Global::oOPressureMultiplier);
+    g.strokePath (state, PathStrokeType (2.0f));
+
+    
 //    std::cout << "repainted" << std::endl;
 
 }
@@ -88,13 +122,39 @@ Path Tube::drawGeometry (Graphics& g, int topOrBottom)
     Path stringPath;
     stringPath.startNewSubPath (0, topOrBottom * radii[0] * visualScaling + getHeight() * 0.5);
     int stateWidth = getWidth();
-    auto spacing = stateWidth / static_cast<double>(N);
+    auto spacing = stateWidth / static_cast<double>(N - 1);
     auto x = spacing;
     
     for (int y = 1; y < N; y++)
     {
         stringPath.lineTo(x, topOrBottom * radii[y] * visualScaling + getHeight() * 0.5);
+        x += spacing;
+    }
+    return stringPath;
+}
 
+Path Tube::visualiseState (Graphics& g, double visualScaling)
+{
+    auto stringBounds = getHeight() / 2.0;
+    Path stringPath;
+    stringPath.startNewSubPath (0, -p[1][0] * visualScaling + stringBounds);
+    int stateWidth = getWidth();
+    auto spacing = stateWidth / static_cast<double>(N - 1);
+    auto x = spacing;
+    
+    for (int y = 1; y < N; y++)
+    {
+        float newY = -p[1][y] * visualScaling + stringBounds; // Needs to be -p, because a positive p would visually go down
+        
+        if (isnan(x) || isinf(abs(x) || isnan(p[1][y]) || isinf(abs(p[1][y]))))
+        {
+            std::cout << "Wait" << std::endl;
+        };
+        
+        if (isnan(newY))
+            newY = 0;
+        stringPath.lineTo(x, newY);
+        //        g.drawEllipse(x, newY, 2, 2, 5);
         x += spacing;
     }
     return stringPath;
@@ -130,6 +190,14 @@ void Tube::calculatePressure()
         p[0][l] = p[1][l] - rho * c * lambda * oOSBar[l] * (SHalf[l] * v[0][l] - SHalf[l-1] * v[0][l-1]);
     
     p[0][0] = p[1][0] - rho * c * lambda * oOSBar[0] * (-2.0 * (Ub + Ur) + 2.0 * SHalf[0] * v[0][0]);
+}
+
+void Tube::calculateRadiation()
+{
+    p[0][N-1] = ((1.0 - rho * c * lambda * z3) * p[1][N-1] - 2.0 * rho * c * lambda * (v1 + z4 * p1 - (SHalf[N-2] * v[0][N-2]) * oOSBar[N-1])) * oORadTerm;
+
+    v1Next = v1 + k / (2.0 * Lr) * (p[0][N-1] + p[1][N-1]);
+    p1Next = z1 * 0.5 * (p[0][N-1] + p[1][N-1]) + z2 * p1;
     
 }
 
@@ -142,6 +210,9 @@ void Tube::updateStates()
     pTmp = p[1];
     p[1] = p[0];
     p[0] = pTmp;
+    
+    p1 = p1Next;
+    v1 = v1Next;
 }
 
 void Tube::calculateGeometry (NamedValueSet& parameters)
@@ -217,4 +288,29 @@ double Tube::getPotEnergy()
         potEnergy1 = potEnergy;
     
     return potEnergy;
+}
+
+double Tube::getRadEnergy()
+{
+    double radEnergy = SBar[N-1] / 2.0 * (Lr * v1 * v1 + Cr * p1 * p1);
+    
+    if (radEnergy1 < 0)
+        radEnergy1 = radEnergy;
+    
+    return radEnergy;
+}
+
+double Tube::getRadDampEnergy()
+{
+    double pBar = 0.5 * (p[0][N-1] + p[1][N-1]);
+    double muTPv2 = (pBar - 0.5 * (p1Next + p1)) / R1;
+    
+    double qRad = SBar[N-1] * (R1 * muTPv2 * muTPv2 + R2 * (0.5 * ((p1Next + p1) / R2) * (0.5 * ((p1Next + p1) / R2))));
+    double qHRad = k * qRad + qHRadPrev;
+
+    double qHRadPrevTmp = qHRadPrev;
+    qHRadPrev = qHRad;
+    return qHRadPrevTmp;
+                                                            
+
 }

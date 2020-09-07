@@ -11,6 +11,10 @@
 #pragma once
 
 namespace Global {
+    
+    static double pressureMultiplier = 10.0;
+    static double oOPressureMultiplier = 1.0 / pressureMultiplier;
+
     static std::vector<double> linspace (double start, double finish, int N)
     {
         std::vector<double> res (N, 0);

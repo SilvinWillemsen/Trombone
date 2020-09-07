@@ -16,11 +16,13 @@ MainComponent::MainComponent()
     
     // specify the number of input and output channels that we want to open
     setAudioChannels (0, 2);
+    startTimerHz (15);
 }
 
 MainComponent::~MainComponent()
 {
     // This shuts down the audio device and clears the audio source.
+    stopTimer();
     shutdownAudio();
 }
 
@@ -48,7 +50,7 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     parameters.set ("bellL", 0.21);                  // bell (length ratio)
     
     //// Lip ////
-    double f0 = 100.0;
+    double f0 = 300.0;
     double H0 = 2.9e-4;
     parameters.set("f0", f0);                       // fundamental freq lips
     parameters.set("Mr", 5.37e-5);                  // mass lips
@@ -62,10 +64,10 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     parameters.set("Sr", 1.46e-5);                  // lip area
     
     parameters.set ("Kcol", 10000);
-    parameters.set ("alphaCol", 10);
+    parameters.set ("alphaCol", 3);
     
     //// Input ////
-    parameters.set ("Pm", 3000);
+    parameters.set ("Pm", 300 * Global::pressureMultiplier);
     
     trombone = std::make_unique<Trombone> (parameters, 1.0 / fs);
     addAndMakeVisible (trombone.get());
@@ -92,9 +94,7 @@ void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFil
     for (int i = 0; i < bufferToFill.numSamples; ++i)
     {
         trombone->calculate();
-        output = trombone->getOutput() * 0.00001;
-//        output = trombone->getLipOutput() * 10.0;
-//        std::cout << "Output: " << output << std::endl;
+        output = trombone->getOutput() * 0.001 * Global::oOPressureMultiplier;
         trombone->updateStates();
         channelData1[i] = Global::outputClamp (output);
         channelData2[i] = Global::outputClamp (output);
@@ -126,4 +126,9 @@ void MainComponent::resized()
     // If you add any child components, this is where you should
     // update their positions.
     trombone->setBounds (getLocalBounds());
+}
+
+void MainComponent::timerCallback()
+{
+    repaint();
 }

@@ -13,6 +13,7 @@
 
 //==============================================================================
 LipModel::LipModel (NamedValueSet& parameters, double k) : k (k),
+                                            lipFreqVal (*parameters.getVarPointer ("f0")),
                                             omega0 (*parameters.getVarPointer ("omega0")),
                                             M (*parameters.getVarPointer ("Mr")),
                                             sig (*parameters.getVarPointer ("sigmaR")),
@@ -25,10 +26,12 @@ LipModel::LipModel (NamedValueSet& parameters, double k) : k (k),
                                             Pm (*parameters.getVarPointer ("Pm"))
 
 {
+    pressureVal = Pm;
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
     oOk = 1.0 / k;
     oOM = 1.0 / M;
+    
     oO2k = 1.0 / (2.0 * k);
     omega0Sq = omega0 * omega0;
     kO2M = 0.5 * oOM * k;
@@ -55,8 +58,9 @@ void LipModel::paint (juce::Graphics& g)
        drawing code..
     */
 
-    g.fillAll (Colours::yellow);   // clear the background
-
+    g.fillAll (Colours::yellow);   // clear the background;
+    g.drawText("Pressure: " + String(pressureVal) + "(Pa) LipFrequency: " + String (lipFreqVal) + "(Hz)", getWidth() - 300, getHeight() - 50, 300, 50, Justification::centredRight);
+    
 }
 
 void LipModel::resized()
@@ -175,14 +179,14 @@ void LipModel::refreshInputParams()
 
 void LipModel::mouseDown (const MouseEvent& e)
 {
-    pressureVal = e.y * 100.0;
+    pressureVal = e.y * Global::pressureMultiplier;
     lipFreqVal = e.x;
     
 }
 
 void LipModel::mouseDrag (const MouseEvent& e)
 {
-    pressureVal = e.y * 100.0;
+    pressureVal = e.y * Global::pressureMultiplier;
     lipFreqVal = e.x;
 }
 
