@@ -15,6 +15,10 @@ namespace Global {
     static double pressureMultiplier = 10.0;
     static double oOPressureMultiplier = 1.0 / pressureMultiplier;
 
+    static bool setTubeTo1 = false;
+    static bool connectedToLip = false;
+    static bool dontInterpolateAtStart = true;
+    
     static std::vector<double> linspace (double start, double finish, int N)
     {
         std::vector<double> res (N, 0);

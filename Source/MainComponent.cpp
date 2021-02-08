@@ -35,14 +35,19 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     //// Tube ////
     parameters.set ("T", 26.85);
     parameters.set ("L", 2.658);
+    parameters.set ("LnonExtended", 2.658);
 
     // Geometry
-    parameters.set ("mp", 0.015 * 0.015 * double_Pi);                   // mouthpiece cross-sectional area
-    parameters.set ("mpL", 0.01);                   // mouthpiece length (length ratio)
-    parameters.set ("m2tL", 0.01);                  // mouthpiece to tube (length ratio)
-    parameters.set ("tubeS", 0.01 * 0.01 * double_Pi);                 // tube cross-sectional area
+//    parameters.set ("mp", 0.015 * 0.015 * double_Pi);                   // mouthpiece cross-sectional area
+//    parameters.set ("mpL", 0.01);                   // mouthpiece length (length ratio)
+//    parameters.set ("m2tL", 0.01);                  // mouthpiece to tube (length ratio)
+//    parameters.set ("tubeS", 0.01 * 0.01 * double_Pi);                 // tube cross-sectional area
     
-    // formula from bell taken from T. Smyth "Trombone synthesis by model and measurement"
+    // Geometric information including formula from bell taken from T. Smyth "Trombone synthesis by model and measurement"
+    geometry = {
+        {0.708, 0.177, 0.711, 0.306, 0.254, 0.502},         // lengths (changed fourth entry to account for bell length "error" in paper)
+        {0.0069, 0.0072, 0.0069, 0.0071, 0.0075, 0.0107}    // radii
+    };
     
     parameters.set ("flare", 0.7);                 // flare (exponent coeff)
     parameters.set ("x0", 0.0174);                    // position of bell mouth (exponent coeff)
@@ -69,7 +74,7 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
     //// Input ////
     parameters.set ("Pm", 300 * Global::pressureMultiplier);
     
-    trombone = std::make_unique<Trombone> (parameters, 1.0 / fs);
+    trombone = std::make_unique<Trombone> (parameters, 1.0 / fs, geometry);
     addAndMakeVisible (trombone.get());
     
     setSize (800, 600);
@@ -95,10 +100,16 @@ void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFil
     {
         trombone->calculate();
         output = trombone->getOutput() * 0.001 * Global::oOPressureMultiplier;
+        trombone->saveToFiles();
         trombone->updateStates();
-        channelData1[i] = Global::outputClamp (output);
-        channelData2[i] = Global::outputClamp (output);
-
+//        channelData1[i] = Global::outputClamp (output);
+//        channelData2[i] = Global::outputClamp (output);
+        ++t;
+    }
+    if (t > 1000)
+    {
+        trombone->closeFiles();
+        std::cout << "done" << std::endl;
     }
     trombone->refreshLipModelInputParams();
 }
